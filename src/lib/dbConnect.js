@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const MONGODB_URI =
-  "mongodb+srv://akshar:loAcmgqdylo3lRVu@emoshield.ssm7l.mongodb.net/?retryWrites=true&w=majority&appName=Emoshield";
 console.log(process.env.MONGODB_URI);
 
 if (!MONGODB_URI) {
