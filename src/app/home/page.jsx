@@ -7,12 +7,15 @@ import EmojiSequence from "@/components/EmojiSequence";
 export default function Home() {
   const [websites, setWebsites] = useState([]);
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("userEmail");
     if (storedEmail) {
       setEmail(storedEmail);
       fetchUserData(storedEmail);
+    } else {
+      setLoading(false);
     }
   }, []);
 
@@ -27,8 +30,18 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center text-5xl">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div>

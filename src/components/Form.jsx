@@ -22,7 +22,9 @@ export default function Form() {
       setError("");
     } else {
       setError("Please enter a valid email address.");
+      return;
     }
+
     try {
       const response = await fetch("/api/sendOTP", {
         method: "POST",
@@ -31,11 +33,15 @@ export default function Form() {
       });
 
       const data = await response.json();
-      // console.log(response.status);
-      if (response.status === 200) {
+
+      if (response.status === 302 && data.redirect) {
+        window.location.href = "/login";
+      } else if (response.status === 200) {
         setBoxes(true);
+        setMessage(data.message);
+      } else {
+        setMessage("An unexpected error occurred.");
       }
-      setMessage(data.message);
     } catch (error) {
       setMessage("Error sending OTP");
     }

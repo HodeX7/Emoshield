@@ -2,6 +2,7 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const dbConnect = require("../../lib/dbConnect");
 const OTP = require("../../models/OTP");
+const Users = require("../../models/Users");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -10,7 +11,7 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: "aksharotp@gmail.com",
-    pass: "igip xvgz dcia vmoo ",
+    pass: "igip xvgz dcia vmoo",
   },
 });
 
@@ -20,10 +21,21 @@ export default async function handler(req, res) {
   }
 
   const { email } = req.body;
+
   const otp = crypto.randomInt(100000, 999999);
 
   try {
     await dbConnect();
+
+    const existingUser = await Users.findOne({ email });
+    if (existingUser) {
+      return res.status(302).json({
+        message: "User already exists. Redirect to login.",
+        redirect: true,
+      });
+    }
+
+    // await OTP.deleteMany({ email });
 
     await OTP.create({ email, otp });
 

@@ -13,7 +13,7 @@ function WebsitesList({ websites }) {
         Websites using Emoshield SSO:
       </h2>
       <div>
-        <ul className="grid-cols-3 grid mt-20 mx-10 ">
+        <ul className="grid-cols-3 grid mt-20 mx-10 gap-5">
           {websites.map((site, index) => (
             <NeonGradientCard className="cursor-pointer" key={index}>
               {site}

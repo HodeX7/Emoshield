@@ -1,16 +1,18 @@
 "use client";
 import { useState, useRef } from "react";
 import dynamic from "next/dynamic";
-import { RainbowButton } from "@/components/ui/rainbow-button";
 import { useRouter } from "next/navigation";
+import { RainbowButton } from "@/components/ui/rainbow-button";
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
-export default function EmojiSequence({ email }) {
+export default function Login() {
   const [emojis, setEmojis] = useState(Array(6).fill(""));
   const inputRefs = useRef([]);
   const [currentInputIndex, setCurrentInputIndex] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
+  const email = localStorage.getItem("userEmail");
 
   const handleEmojiClick = (emojiData) => {
     setEmojis((prevEmojis) => {
@@ -44,8 +46,9 @@ export default function EmojiSequence({ email }) {
       alert("Please fill all the emoji fields.");
       return;
     }
+
     try {
-      const response = await fetch("/api/updateUser", {
+      const response = await fetch("/api/validateEmojiSequence", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -55,20 +58,28 @@ export default function EmojiSequence({ email }) {
       });
 
       const data = await response.json();
-      console.log(data.message);
-      router.push("/home");
+
+      if (response.status === 200) {
+        router.push("/home");
+      } else {
+        setErrorMessage(
+          data.message || "Invalid credentials, please try again."
+        );
+      }
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error("Error during login:", error);
+      setErrorMessage("Server error, please try again later.");
     }
   };
 
   return (
     <div className="flex justify-center items-center h-screen">
       <div className="flex flex-col justify-center w-1/2">
-        <h2 className="text-3xl">
-          Select a sequence of 6 emojis as your password:
-        </h2>
-        <div className="grid-cols-3 grid mb-5 mt-5 ">
+        <h2 className="text-3xl">Enter Your Emoji Sequence</h2>
+
+        {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+
+        <div className="grid-cols-3 grid mb-5 mt-5">
           {emojis.map((emoji, index) => (
             <input
               key={index}
@@ -82,10 +93,12 @@ export default function EmojiSequence({ email }) {
             />
           ))}
         </div>
+
         <div>
-          <RainbowButton onClick={submit}> Get Emoshielded! </RainbowButton>
+          <RainbowButton onClick={submit}>Get Emoshielded!</RainbowButton>
         </div>
       </div>
+
       <EmojiPicker onEmojiClick={handleEmojiClick} />
     </div>
   );
