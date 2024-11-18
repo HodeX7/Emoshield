@@ -56,7 +56,7 @@ export default function EmojiSequence({ email }) {
 
       const data = await response.json();
       console.log(data.message);
-      router.push("/home");
+      window.location.reload(true);
     } catch (error) {
       console.error("Error updating user:", error);
     }
@@ -85,6 +85,11 @@ export default function EmojiSequence({ email }) {
         <div>
           <RainbowButton onClick={submit}> Get Emoshielded! </RainbowButton>
         </div>
+        <p className="mt-14 text-2xl">
+          Use the following prompt to generate a set of emojis for your own
+          custom story
+        </p>
+        <p>Give me a sequence of 6 emojis for the following story:</p>
       </div>
       <EmojiPicker onEmojiClick={handleEmojiClick} />
     </div>
