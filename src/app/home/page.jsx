@@ -10,11 +10,18 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedEmail = localStorage.getItem("userEmail");
-    if (storedEmail) {
-      setEmail(storedEmail);
-      fetchUserData(storedEmail);
-    } else {
+    try {
+      if (typeof window !== "undefined") {
+        const storedEmail = localStorage.getItem("userEmail");
+        if (storedEmail) {
+          setEmail(storedEmail);
+          fetchUserData(storedEmail);
+        } else {
+          setLoading(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error accessing localStorage:", error);
       setLoading(false);
     }
   }, []);

@@ -1,6 +1,6 @@
 "use client";
 import { MagicCard } from "@/components/ui/magic-card";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ShinyButton from "@/components/ui/shiny-button";
 
@@ -15,17 +15,28 @@ export default function Form() {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+  // Load previously stored email safely after hydration
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedEmail = localStorage.getItem("userEmail");
+      if (savedEmail) setEmail(savedEmail);
+    }
+  }, []);
+
   const handleSubmit = async () => {
-    if (emailRegex.test(email)) {
-      console.log("Valid email:", email);
-      localStorage.setItem("userEmail", email);
-      setError("");
-    } else {
+    if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
+    setError("");
+    setMessage("");
+
     try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("userEmail", email);
+      }
+
       const response = await fetch("/api/sendOTP", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -34,21 +45,22 @@ export default function Form() {
 
       const data = await response.json();
 
-      if (response.status === 302 && data.redirect) {
-        window.location.href = "/login";
-      } else if (response.status === 200) {
+      if (response.status === 200) {
         setBoxes(true);
         setMessage(data.message);
+      } else if (response.status === 302 && data.redirect) {
+        router.push("/login");
       } else {
         setMessage("An unexpected error occurred.");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Error sending OTP:", err);
       setMessage("Error sending OTP");
     }
   };
 
   const handleOTP = async () => {
-    let userOtp = otp.join("");
+    const userOtp = otp.join("");
     try {
       const response = await fetch("/api/verify", {
         method: "POST",
@@ -57,42 +69,43 @@ export default function Form() {
       });
 
       const data = await response.json();
-      setMessage(data.message);
-      if (response.status === 200) {
+      setMessage(data.message || "");
+
+      if (response.status === 200 && typeof window !== "undefined") {
         localStorage.setItem("userEmail", email);
-        router.push(`/home`);
+        router.push("/home");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Error verifying OTP:", err);
       setMessage("Error verifying OTP");
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSubmit().then((res) => console.log(res));
-    }
+    if (e.key === "Enter") handleSubmit();
   };
 
   const handleOtpChange = (index, value) => {
     if (isNaN(value)) return;
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    if (value !== "" && index < 5) {
-      inputRefs.current[index + 1].focus();
+    if (value && index < otp.length - 1) {
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace") {
+      const newOtp = [...otp];
       if (otp[index] === "" && index > 0) {
-        inputRefs.current[index - 1].focus();
+        inputRefs.current[index - 1]?.focus();
       } else {
-        const newOtp = [...otp];
         newOtp[index] = "";
-        setOtp(newOtp);
       }
+      setOtp(newOtp);
     }
   };
 
@@ -100,24 +113,28 @@ export default function Form() {
     <div className="flex flex-col items-center justify-center h-full w-full p-4 lg:flex-row lg:gap-4">
       <MagicCard
         className="flex flex-col justify-center items-center w-full max-w-md p-6 shadow-2xl text-xl lg:text-2xl"
-        gradientColor={"#262626"}
+        gradientColor="#262626"
       >
         <h1 className="text-center mb-4">Enter Your E-mail Address</h1>
+
         <input
           className="bg-transparent border-b border-gray-400 mt-4 focus:outline-none text-sm w-full p-2"
           placeholder="example@email.com"
           type="email"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={handleKeyPress}
         />
+
         {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
+
         {boxes ? (
           <div>
             <p className="text-xs mb-5 text-gray-400">
               Email sent to{" "}
               <span className="text-white cursor-pointer">{email}</span>
             </p>
-            <div className="flex gap-4">
+            <div className="flex gap-4 justify-center">
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -140,6 +157,8 @@ export default function Form() {
             Enter Your Email
           </ShinyButton>
         )}
+
+        {message && <p className="text-xs mt-3 text-gray-400">{message}</p>}
       </MagicCard>
     </div>
   );
