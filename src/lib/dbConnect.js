@@ -40,5 +40,3 @@ async function dbConnect() {
 }
 
 module.exports = dbConnect;
-
-// mongodb+srv://akshar:PassKeyDB@cluster0.tniayak.mongodb.net/?appName=Cluster0
