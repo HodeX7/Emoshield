@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const dbConnect = require("../../lib/dbConnect");
 const OTP = require("../../models/OTP");
 const Users = require("../../models/Users");
+require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -10,8 +11,8 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: "aksharotp@gmail.com",
-    pass: "igip xvgz dcia vmoo",
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -26,8 +27,9 @@ export default async function handler(req, res) {
 
   try {
     await dbConnect();
-
+    console.log("1");
     const existingUser = await Users.findOne({ email });
+    console.log("2");
     if (existingUser) {
       return res.status(302).json({
         message: "User already exists. Redirect to login.",
